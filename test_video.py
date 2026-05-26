@@ -4,7 +4,7 @@ import numpy as np
 import json
 from shapely.geometry import Point, Polygon
 
-def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced, safety_state):
+def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced, robot_state, human_state):
     if r.masks is not None:
             for box, mask in zip(r.boxes, r.masks):
                 label = class_names[int(box.cls[0])]
@@ -21,9 +21,12 @@ def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced, safety_state):
                     # 3. The New Magic Check: Does ANY part of the object overlap the zone?
                     if label=="robot":
                         if danger_polygon.intersects(object_polygon):
-                            safety_state = "⚠️ Critical safety, robot in danger zone"
+                            robot_state = "Robot in danger zone"
                         else:
-                            safety_state = "Robot in frame, outside of danger zone"
+                            robot_state = "Robot outside danger zone"
+                        
+                    if label=='human':
+                        human_state = "Human in frame"
 
 
                     if ((label == "Pen") or (label=="highlighter")) and not tray_polygon.contains(object_polygon):
@@ -35,7 +38,7 @@ def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced, safety_state):
                         if label == "highlighter":
                             highlighter_in_tray += 1
 
-    return pen_in_tray, highlighter_in_tray, kit_misplaced, safety_state
+    return pen_in_tray, highlighter_in_tray, kit_misplaced, robot_state, human_state
 
 
 
@@ -68,7 +71,7 @@ def get_zones(filePath):
     return tray_pts,tray_polygon,danger_pts,danger_polygon
 
 # 1. Load your model
-model = YOLO(r'Models\V2\weights\best.pt') 
+model = YOLO(r'D:\Suede\Cours\MAC700\MAC_final_project\Models\V3\best.pt') 
 
 # 2. Open the video file (Highly recommended to use the RAW Basler video here!)
 video_path = r'C:\Users\couty\Desktop\ScreenRecord.mp4'
@@ -97,17 +100,19 @@ while cap.isOpened():
 
     # Step 1: Run YOLO inference on the clean frame
     # This prevents the gray polygon overlay from throwing off the AI's detection accuracy
-    results = model(frame,conf=0.6, stream=False)
+    results = model(frame,conf=0.3, stream=False)
     pen_in_tray = 0
     highlighter_in_tray = 0
     kit_misplaced = False
     kitting_state = ""
-    safety_state = "No robot in frame"
+    robot_state = "No robot in frame"
+    human_state = "No human in frame"
+    safety_state = "Nothing in frame"
 
     for r in results:
         class_names = r.names
         frame = r.plot()
-        pen_in_tray,highlighter_in_tray,kit_misplaced, safety_state = check_zones(pen_in_tray,highlighter_in_tray, kit_misplaced, safety_state)
+        pen_in_tray,highlighter_in_tray,kit_misplaced, robot_state, human_state = check_zones(pen_in_tray,highlighter_in_tray, kit_misplaced, robot_state, human_state)
         
     # Blend the solid zone overlay back into the annotated frame
     alpha = 0.2  # Transparency transparency factor (0.0 = invisible, 1.0 = solid)
@@ -118,9 +123,9 @@ while cap.isOpened():
     elif pen_in_tray == 0 and highlighter_in_tray == 0:
         kitting_state="Empty"
     elif pen_in_tray == 1 and highlighter_in_tray == 0:
-        kitting_state="Partial"
+        kitting_state="Partial, missing an highlighter"
     elif pen_in_tray == 0 and highlighter_in_tray == 1:
-        kitting_state="Partial"
+        kitting_state="Partial, missing a pen"
     elif pen_in_tray == 1 and highlighter_in_tray == 1:
         kitting_state="Ready"
     elif pen_in_tray > 1 and highlighter_in_tray <= 1 :
@@ -130,8 +135,19 @@ while cap.isOpened():
     else:
         kitting_state="Invalid"
 
+    if (human_state == "Human in frame") and (robot_state == "No robot in frame"):
+        safety_state = "OK"
+    elif (human_state == 'Human in frame') and (robot_state == "Robot outside danger zone"):
+        safety_state = "Coexist safe"
+    elif (human_state == 'Human in frame') and (robot_state == "Robot in danger zone"):
+        safety_state = "Coexist dangerous"
+    elif (human_state == 'No human in frame') and (robot_state == "Robot in danger zone"):
+        safety_state = "Robot in danger zone"
+
+
+
     print(f"Kitting state is {kitting_state} ! \n")
-    print(safety_state)
+    print(f"Safety state is {safety_state}")
 
     # Display the final combined result
     cv2.imshow("YOLO Speed Test", frame)
