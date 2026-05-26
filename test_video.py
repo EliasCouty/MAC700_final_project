@@ -4,7 +4,7 @@ import numpy as np
 import json
 from shapely.geometry import Point, Polygon
 
-def check_zones():
+def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced):
     if r.masks is not None:
             for box, mask in zip(r.boxes, r.masks):
                 label = class_names[int(box.cls[0])]
@@ -19,15 +19,20 @@ def check_zones():
                     object_polygon = Polygon(polygon_points)
                     
                     # 3. The New Magic Check: Does ANY part of the object overlap the zone?
-                    if label == "Pen" or label == "highlighter":
-                        if danger_polygon.intersects(object_polygon):
+                    if danger_polygon.intersects(object_polygon):
+                        if label == "robot":
                             print(f"⚠️ ALARM: A part of {label.upper()} entered the Danger Zone!")
-                        
-                            # Visual debugging: Draw the object's outline in RED to show it's overlapping
-                            cv2.polylines(frame, [np.int32(polygon_points)], isClosed=True, color=(0, 0, 255), thickness=2)
-                        else:
-                            # Visual debugging: Draw the object's outline in GREEN if safe
-                            cv2.polylines(frame, [np.int32(polygon_points)], isClosed=True, color=(0, 255, 0), thickness=2)
+                        if label == "Pen" or "highlighter":
+                            kit_misplaced = True
+
+                    if tray_polygon.contains(object_polygon):
+                        if label == "Pen":
+                            pen_in_tray += 1
+                        if label == "highlighter":
+                            highlighter_in_tray += 1
+    return pen_in_tray, highlighter_in_tray, kit_misplaced
+
+
 
 def get_zones(filePath):
     # Load JSON coordinates
@@ -57,8 +62,6 @@ def get_zones(filePath):
 
     return tray_pts,tray_polygon,danger_pts,danger_polygon
 
-
-
 # 1. Load your model
 model = YOLO(r'Models\V2\weights\best.pt') 
 
@@ -72,8 +75,6 @@ frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 cv2.namedWindow("YOLO Speed Test", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("YOLO Speed Test", 1080, 720)
-
-
 
 #print("Tray points found:", tray_pts is not None)
 #print("Danger zone points found:", danger_pts is not None)
@@ -92,15 +93,34 @@ while cap.isOpened():
     # Step 1: Run YOLO inference on the clean frame
     # This prevents the gray polygon overlay from throwing off the AI's detection accuracy
     results = model(frame,conf=0.6, stream=False)
+    pen_in_tray = 0
+    highlighter_in_tray = 0
+    kit_misplaced = False
+    kitting_state = ""
 
     for r in results:
         class_names = r.names
         frame = r.plot()
-        check_zones()
+        pen_in_tray,highlighter_in_tray,kit_misplaced = check_zones(pen_in_tray,highlighter_in_tray, kit_misplaced)
         
     # Blend the solid zone overlay back into the annotated frame
     alpha = 0.2  # Transparency transparency factor (0.0 = invisible, 1.0 = solid)
     cv2.addWeighted(zone_overlay, alpha, frame, 1 - alpha, 0, dst=frame)
+
+    if kit_misplaced == True:
+        kitting_state = "Missplaced ⚠️"
+    elif pen_in_tray == 0 and highlighter_in_tray == 0:
+        kitting_state="Empty"
+    elif pen_in_tray == 1 and highlighter_in_tray == 0:
+        kitting_state="Partial"
+    elif pen_in_tray == 0 and highlighter_in_tray == 1:
+        kitting_state="Partial"
+    elif pen_in_tray == 1 and highlighter_in_tray == 1:
+        kitting_state="Ready"
+    else:
+        kitting_state="Invalid"
+
+    print(f"Kitting state is {kitting_state} !")
 
     # Display the final combined result
     cv2.imshow("YOLO Speed Test", frame)
