@@ -19,11 +19,11 @@ def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced):
                     object_polygon = Polygon(polygon_points)
                     
                     # 3. The New Magic Check: Does ANY part of the object overlap the zone?
-                    if danger_polygon.intersects(object_polygon):
-                        if label == "robot":
+                    if danger_polygon.intersects(object_polygon) and (label=="robot"):
                             print(f"⚠️ ALARM: A part of {label.upper()} entered the Danger Zone!")
-                        if label == "Pen" or "highlighter":
-                            kit_misplaced = True
+
+                    if ((label == "Pen") or (label=="highlighter")) and not tray_polygon.contains(object_polygon):
+                        kit_misplaced = True
 
                     if tray_polygon.contains(object_polygon):
                         if label == "Pen":
