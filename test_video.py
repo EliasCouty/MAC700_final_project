@@ -29,6 +29,35 @@ def check_zones():
                             # Visual debugging: Draw the object's outline in GREEN if safe
                             cv2.polylines(frame, [np.int32(polygon_points)], isClosed=True, color=(0, 255, 0), thickness=2)
 
+def get_zones(filePath):
+    # Load JSON coordinates
+    json_path = filePath
+    with open(json_path, 'r') as file:
+        data = json.load(file)
+
+    tray_pts = None
+    tray_polygon = None
+    danger_pts = None
+    danger_polygon = None
+
+    for shape in data["shapes"]:
+        label = shape["label"]
+        points_list = shape["points"]
+    
+        np_points = np.array(points_list, dtype=np.int32)
+        formatted_points = np_points.reshape((-1, 1, 2)) #Adapt to the format wanted by openCV
+    
+        # Note: Ensure these match your JSON casing exactly (e.g., "Danger zone" vs "Danger Zone")
+        if label == "Tray":
+            tray_pts = formatted_points
+            tray_polygon = Polygon(tray_pts.reshape(-1,2))
+        elif label == "Danger":
+            danger_pts = formatted_points
+            danger_polygon = Polygon(danger_pts.reshape(-1,2))
+
+    return tray_pts,tray_polygon,danger_pts,danger_polygon
+
+
 
 # 1. Load your model
 model = YOLO(r'Models\V2\weights\best.pt') 
@@ -44,33 +73,12 @@ frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 cv2.namedWindow("YOLO Speed Test", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("YOLO Speed Test", 1080, 720)
 
-# Load JSON coordinates
-json_path = r'C:\Users\couty\Desktop\screenRecord - frame at 0m0s.json'
-with open(json_path, 'r') as file:
-    data = json.load(file)
 
-tray_pts = None
-tray_polygon = None
-danger_pts = None
-danger_polygon = None
-
-for shape in data["shapes"]:
-    label = shape["label"]
-    points_list = shape["points"]
-    
-    np_points = np.array(points_list, dtype=np.int32)
-    formatted_points = np_points.reshape((-1, 1, 2)) #Adapt to the format wanted by openCV
-    
-    # Note: Ensure these match your JSON casing exactly (e.g., "Danger zone" vs "Danger Zone")
-    if label == "Tray":
-        tray_pts = formatted_points
-        tray_polygon = Polygon(tray_pts.reshape(-1,2))
-    elif label == "Danger":
-        danger_pts = formatted_points
-        danger_polygon = Polygon(danger_pts.reshape(-1,2))
 
 #print("Tray points found:", tray_pts is not None)
 #print("Danger zone points found:", danger_pts is not None)
+
+tray_pts,tray_polygon,danger_pts,danger_polygon = get_zones(r'C:\Users\couty\Desktop\screenRecord - frame at 0m0s.json')
 
 zone_overlay = np.zeros((frame_height, frame_width, 3),dtype=np.uint8)
 cv2.fillPoly(zone_overlay, [danger_pts], (0,0,255))
