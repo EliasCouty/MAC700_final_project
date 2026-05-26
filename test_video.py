@@ -4,7 +4,7 @@ import numpy as np
 import json
 from shapely.geometry import Point, Polygon
 
-def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced):
+def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced, safety_state):
     if r.masks is not None:
             for box, mask in zip(r.boxes, r.masks):
                 label = class_names[int(box.cls[0])]
@@ -19,8 +19,12 @@ def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced):
                     object_polygon = Polygon(polygon_points)
                     
                     # 3. The New Magic Check: Does ANY part of the object overlap the zone?
-                    if danger_polygon.intersects(object_polygon) and (label=="robot"):
-                            print(f"⚠️ ALARM: A part of {label.upper()} entered the Danger Zone!")
+                    if label=="robot":
+                        if danger_polygon.intersects(object_polygon):
+                            safety_state = "⚠️ Critical safety, robot in danger zone"
+                        else:
+                            safety_state = "Robot in frame, outside of danger zone"
+
 
                     if ((label == "Pen") or (label=="highlighter")) and not tray_polygon.contains(object_polygon):
                         kit_misplaced = True
@@ -30,7 +34,8 @@ def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced):
                             pen_in_tray += 1
                         if label == "highlighter":
                             highlighter_in_tray += 1
-    return pen_in_tray, highlighter_in_tray, kit_misplaced
+
+    return pen_in_tray, highlighter_in_tray, kit_misplaced, safety_state
 
 
 
@@ -97,11 +102,12 @@ while cap.isOpened():
     highlighter_in_tray = 0
     kit_misplaced = False
     kitting_state = ""
+    safety_state = "No robot in frame"
 
     for r in results:
         class_names = r.names
         frame = r.plot()
-        pen_in_tray,highlighter_in_tray,kit_misplaced = check_zones(pen_in_tray,highlighter_in_tray, kit_misplaced)
+        pen_in_tray,highlighter_in_tray,kit_misplaced, safety_state = check_zones(pen_in_tray,highlighter_in_tray, kit_misplaced, safety_state)
         
     # Blend the solid zone overlay back into the annotated frame
     alpha = 0.2  # Transparency transparency factor (0.0 = invisible, 1.0 = solid)
@@ -117,10 +123,15 @@ while cap.isOpened():
         kitting_state="Partial"
     elif pen_in_tray == 1 and highlighter_in_tray == 1:
         kitting_state="Ready"
+    elif pen_in_tray > 1 and highlighter_in_tray <= 1 :
+        kitting_state = "Too many pens"
+    elif pen_in_tray <= 1 and highlighter_in_tray > 1:
+        kitting_state = "Too many highlighters"
     else:
         kitting_state="Invalid"
 
-    print(f"Kitting state is {kitting_state} !")
+    print(f"Kitting state is {kitting_state} ! \n")
+    print(safety_state)
 
     # Display the final combined result
     cv2.imshow("YOLO Speed Test", frame)
