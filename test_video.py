@@ -2,13 +2,14 @@ import cv2
 from ultralytics import YOLO
 import numpy as np
 import json
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Polygon
+import time
 
-def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced, robot_state, human_state):
+def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced, robot_state, human_state, confidence_scores):
     if r.masks is not None:
             for box, mask in zip(r.boxes, r.masks):
                 label = class_names[int(box.cls[0])]
-                
+                confidence_scores.append(box.conf[0])
                 # 1. Extract the boundary points of the mask
                 polygon_points = mask.xy[0] 
                 
@@ -38,7 +39,7 @@ def check_zones(pen_in_tray , highlighter_in_tray, kit_misplaced, robot_state, h
                         if label == "highlighter":
                             highlighter_in_tray += 1
 
-    return pen_in_tray, highlighter_in_tray, kit_misplaced, robot_state, human_state
+    return pen_in_tray, highlighter_in_tray, kit_misplaced, robot_state, human_state, confidence_scores
 
 
 
@@ -93,6 +94,9 @@ zone_overlay = np.zeros((frame_height, frame_width, 3),dtype=np.uint8)
 cv2.fillPoly(zone_overlay, [danger_pts], (0,0,255))
 cv2.fillPoly(zone_overlay, [tray_pts], (0,255,0))
 
+last_detection = time.time()
+detection_threshold = 3.0
+
 while cap.isOpened():
     success, frame = cap.read()
     if not success:
@@ -100,7 +104,7 @@ while cap.isOpened():
 
     # Step 1: Run YOLO inference on the clean frame
     # This prevents the gray polygon overlay from throwing off the AI's detection accuracy
-    results = model(frame,conf=0.3, stream=False)
+    results = model(frame,conf=0.4, stream=True)
     pen_in_tray = 0
     highlighter_in_tray = 0
     kit_misplaced = False
@@ -108,11 +112,16 @@ while cap.isOpened():
     robot_state = "No robot in frame"
     human_state = "No human in frame"
     safety_state = "Nothing in frame"
+    system_health = "OK"
+    Detected = False
+    confidence_scores = []
 
     for r in results:
         class_names = r.names
         frame = r.plot()
-        pen_in_tray,highlighter_in_tray,kit_misplaced, robot_state, human_state = check_zones(pen_in_tray,highlighter_in_tray, kit_misplaced, robot_state, human_state)
+        pen_in_tray,highlighter_in_tray,kit_misplaced, robot_state, human_state, confidence_scores = check_zones(pen_in_tray,highlighter_in_tray, kit_misplaced, robot_state, human_state, confidence_scores)
+        if len(r.boxes) > 0:
+            Detected = True
         
     # Blend the solid zone overlay back into the annotated frame
     alpha = 0.2  # Transparency transparency factor (0.0 = invisible, 1.0 = solid)
@@ -144,10 +153,22 @@ while cap.isOpened():
     elif (human_state == 'No human in frame') and (robot_state == "Robot in danger zone"):
         safety_state = "Robot in danger zone"
 
+    if Detected == True:
+        last_detection = time.time()
+    elif (time.time()-last_detection)>detection_threshold:
+        system_health = "No detection timeout"
+
+    if len(confidence_scores)>0:
+        average_confidence = sum(confidence_scores)/len(confidence_scores)
+    if (average_confidence < 0.8) and (system_health == "OK"):
+        system_health = "Low detection confidence"
+    
 
 
-    print(f"Kitting state is {kitting_state} ! \n")
+
+    print(f"Kitting state is {kitting_state} !")
     print(f"Safety state is {safety_state}")
+    print(f"System health is {system_health} \n")
 
     # Display the final combined result
     cv2.imshow("YOLO Speed Test", frame)
