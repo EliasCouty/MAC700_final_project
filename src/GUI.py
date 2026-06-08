@@ -4,7 +4,7 @@ import os
 from PIL import Image, ImageTk
 
 # --- CONFIGURATION ---
-JSONL_PATH = r"states.json" 
+JSONL_PATH = r"Config\states.json" 
 LOGO_PATH = r"Images\hogskolan-vast-logo.png"
 
 # Vibe Settings

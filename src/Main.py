@@ -79,7 +79,7 @@ frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 cv2.namedWindow("YOLO Speed Test", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("YOLO Speed Test", 1080, 720)
 
-tray_pts,tray_polygon,danger_pts,danger_polygon = get_zones(r'Images\Video_Frame\Frame1_zones.json')
+tray_pts,tray_polygon,danger_pts,danger_polygon = get_zones(r'Config\Video_Frame\Frame1_zones.json')
 
 #Create an empty image the size of the video, and draw the zones on it
 zone_overlay = np.zeros((frame_height, frame_width, 3),dtype=np.uint8)
@@ -170,7 +170,7 @@ while cap.isOpened():
 
     #Write the states to a JSON file to allow the GUI to read the states
     snapshot = { "ts": time.time(),"kit": kitting_state,"safety": safety_state,"system_health": system_health }
-    with open(r"states.json", "a") as f:
+    with open(r"Config\states.json", "a") as f:
         f.write(json.dumps(snapshot) + "\n")
 
     # Display the final result

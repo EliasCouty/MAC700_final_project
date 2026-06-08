@@ -1,9 +1,9 @@
 {
   "basic": {
-    "project": "C:\\Users\\couty\\xanylabeling_data/trainer/ultralytics\\runs\\segment",
+    "project": "YOLO_model/runs/segment",
     "name": "Safety_AI_V4",
-    "model": "D:/Suede/Cours/MAC700/MAC_final_project/Models/V3/best.pt",
-    "data": "D:/Suede/Cours/MAC700/MAC_final_project/seg-training.yaml",
+    "model": "YOLO_model/weights/best.pt",
+    "data": "Config/seg-training.yaml",
     "device": "cpu",
     "dataset_ratio": 0.8,
     "pose_config": ""

@@ -1,7 +1,7 @@
 task: segment
 mode: train
-model: D:/Suede/Cours/MAC700/MAC_final_project/Models/V3/best.pt
-data: C:\Users\couty\xanylabeling_data/trainer/ultralytics\datasets\segment\seg-training_20260527_141658\data.yaml
+model: YOLO_model/weights/best.pt
+data: Config/seg-training.yaml
 epochs: 150
 time: null
 patience: 100
@@ -12,7 +12,7 @@ save_period: -1
 cache: false
 device: '0'
 workers: 4
-project: C:\Users\couty\xanylabeling_data/trainer/ultralytics\runs\segment
+project: YOLO_model/runs/segment
 name: Safety_AI_V4
 exist_ok: false
 pretrained: true
@@ -107,4 +107,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: botsort.yaml
-save_dir: C:\Users\couty\xanylabeling_data\trainer\ultralytics\runs\segment\Safety_AI_V4
+save_dir: YOLO_model/runs/segment/Safety_AI_V4
