@@ -2,8 +2,8 @@ import subprocess
 import sys
 import time
 
-YOLO_SCRIPT = "src\Main.py"
-GUI_SCRIPT = "src\GUI.py"
+YOLO_SCRIPT = "Main.py"
+GUI_SCRIPT = "GUI.py"
 
 print("Starting Kitting State Detection System...")
 

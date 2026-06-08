@@ -4,8 +4,8 @@ import os
 from PIL import Image, ImageTk
 
 # --- CONFIGURATION ---
-JSONL_PATH = r"Config\states.json" 
-LOGO_PATH = r"Images\hogskolan-vast-logo.png"
+JSONL_PATH = r"../Config\states.json" 
+LOGO_PATH = r"../Images\hogskolan-vast-logo.png"
 
 # Vibe Settings
 BG_COLOR = "#D6E8F5"       # Soft light blue background
