@@ -1,0 +1,76 @@
+{
+  "version": "3.2.6",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "Tray",
+      "score": null,
+      "points": [
+        [
+          346.7289719626168,
+          408.3177570093458
+        ],
+        [
+          899.0654205607476,
+          816.7289719626168
+        ],
+        [
+          1464.6586345381525,
+          45.301204819277174
+        ],
+        [
+          1400.0,
+          0.0
+        ],
+        [
+          655.0,
+          0.0
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "difficult": false,
+      "shape_type": "polygon",
+      "flags": {},
+      "attributes": {},
+      "kie_linking": []
+    },
+    {
+      "label": "Danger",
+      "score": null,
+      "points": [
+        [
+          343.33333333333337,
+          405.0
+        ],
+        [
+          3.3333333333333712,
+          846.6666666666667
+        ],
+        [
+          0.0,
+          906.6666666666667
+        ],
+        [
+          558.3333333333335,
+          1313.3333333333335
+        ],
+        [
+          896.6666666666667,
+          815.0
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "difficult": false,
+      "shape_type": "polygon",
+      "flags": {},
+      "attributes": {},
+      "kie_linking": []
+    }
+  ],
+  "imagePath": "screenRecord - frame at 0m0s.jpg",
+  "imageData": null,
+  "imageHeight": 1440,
+  "imageWidth": 1700
+}
