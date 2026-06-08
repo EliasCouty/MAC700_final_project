@@ -8,11 +8,11 @@ The assignment was to detect several states and inform the user about them:
 
 | Category | State | Description |
 | :--- | :--- | :--- |
-| **Kitting states** | empty | |
-| | partial | only 1 pen or highlighter |
+| **Kitting states** | empty | No items in frame|
+| | partial | Only 1 pen or 1 highlighter |
 | | ready | 1 pen and 1 highlighter |
 | | overfilled | 2 or more of a single item |
-| | misplaced | item outside of work zone |
+| | misplaced | At least 1 item outside of tray zone |
 | **Safety state** | Safe | no human in frame and robot outside of danger zone |
 | | coexist_safe | human and robot in frame, robot outside of danger zone |
 | | coexist_dangerous | robot in danger zone and human in frame |
