@@ -29,4 +29,6 @@ Once my model was trained, I ran it on images to see how well it was working and
 
 For every frame of the video, my program will run the YOLO model, check if the detected objects intersect with the defined zones, determine the states, write the states in the terminal and JSON file and display the image containing the current frame, bounding boxes with confidence scores and zones. The GUI program will run at the same time, reading the last line of the JSON file to display the current states.
 
+To run the code, you need to download the required libraries using the "requirements.txt" file and then launch the file "Launcher.py" to run both the Main and the GUI at the same time.
+
 AI usage : The dataset collection, annotation, model training, code logic and system states were done entirely by myself. AI was used as a programming assistant to generate the GUI program, help with JSON data formatting and to understand some of the libraries that I had never used before. All of the code has been reviewed, understood and checked by myself.
